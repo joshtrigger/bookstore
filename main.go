@@ -11,7 +11,7 @@ func main() {
 	
 	models.ConnectDatabase()
 
-	bookhandler := controllers.InitBookHandler()
+	bookhandler := controllers.InitBookHandler(models.DB)
 
 	r.GET("/books", bookhandler.GetBooks)
 	r.GET("/books/:id", bookhandler.GetBook)

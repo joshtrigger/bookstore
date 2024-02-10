@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joshtrigger/api/models"
+	"gorm.io/gorm"
 )
 
 type BookInput struct {
@@ -24,20 +25,21 @@ type BookHandler interface {
 	DeleteBook(c *gin.Context)
 }
 
-func InitBookHandler() BookHandler {
-	s := models.InitBookService(models.DB)
+func InitBookHandler(db *gorm.DB) BookHandler {
+	s := models.InitBookService(db)
 
 	return &bookhandler{service: s}
 }
 
 func (handler *bookhandler) GetBooks(c *gin.Context) {
-	books := handler.service.GetBooks(c)
+	books := handler.service.GetBooks()
 
 	c.JSON(http.StatusOK, gin.H{"data": books})
 }
 
 func (handler *bookhandler) GetBook(c *gin.Context) {
-	book, err := handler.service.GetBook(c)
+	id := c.Param("id")
+	book, err := handler.service.GetBook(id)
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "record not found"})
@@ -47,7 +49,8 @@ func (handler *bookhandler) GetBook(c *gin.Context) {
 }
 
 func (handler *bookhandler) DeleteBook(c *gin.Context) {
-	_, err := handler.service.DeleteBook(c)
+	id := c.Param("id")
+	_, err := handler.service.DeleteBook(id)
 
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "record not found"})
@@ -65,10 +68,11 @@ func (handler *bookhandler) UpdateBook(c *gin.Context) {
 		return
 	}
 
-	book, err := handler.service.UpdateBook(c, models.Book{Title: input.Title, Description: input.Description})
+	id := c.Param("id")
+	book, err := handler.service.UpdateBook(id, models.Book{Title: input.Title, Description: input.Description})
 
 	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error": "record not found"})
+		c.JSON(http.StatusOK, gin.H{"error": "record not found here lol"})
 		return
 	}
 
@@ -84,7 +88,7 @@ func (handler *bookhandler) CreateBook(c *gin.Context) {
 	}
 
 	data := models.Book{Title: input.Title, Description: input.Description}
-	book := handler.service.CreateBook(c, data)
+	book := handler.service.CreateBook(data)
 
 	c.JSON(http.StatusOK, gin.H{"data": book})
 }

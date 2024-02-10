@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -21,18 +20,18 @@ type bookService struct {
 }
 
 type BookService interface {
-	GetBooks(c *gin.Context) (*[]Book)
-	GetBook(c *gin.Context) (*Book, error)
-	UpdateBook(c *gin.Context, input Book) (*Book, error)
-	CreateBook(c *gin.Context, input Book) (*Book)
-	DeleteBook(c *gin.Context) (bool, error)
+	GetBooks() *[]Book
+	GetBook(id string) (*Book, error)
+	UpdateBook(id string, input Book) (*Book, error)
+	CreateBook(input Book) *Book
+	DeleteBook(id string) (bool, error)
 }
 
-func InitBookService(db *gorm.DB ) BookService {
+func InitBookService(db *gorm.DB) BookService {
 	return &bookService{db}
 }
 
-func (service *bookService) GetBooks(c *gin.Context) (*[]Book) {
+func (service *bookService) GetBooks() *[]Book {
 	var books []Book
 
 	service.db.Find(&books)
@@ -40,42 +39,51 @@ func (service *bookService) GetBooks(c *gin.Context) (*[]Book) {
 	return &books
 }
 
-func (service *bookService) GetBook(c *gin.Context) (*Book, error) {
+func (service *bookService) GetBook(id string) (*Book, error) {
 	var book Book
 
-	if err := DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		return &Book{}, err
+	if err := service.db.Where("id = ?", id).First(&book).Error; err != nil {
+		return nil, err
 	}
-	return &Book{}, nil
+	return &book, nil
 }
 
-func (service *bookService) DeleteBook(c *gin.Context) (bool, error) {
+func (service *bookService) DeleteBook(id string) (bool, error) {
 	var book Book
 
-	if err := DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
+	if err := service.db.Where("id = ?", id).First(&book).Error; err != nil {
 		return false, err
 	}
-	DB.Delete(&book)
+	service.db.Delete(&book)
 
 	return true, nil
 }
 
-func (service *bookService) UpdateBook(c *gin.Context, input Book) (*Book, error) {
+func (service *bookService) UpdateBook(id string, input Book) (*Book, error) {
 	var book Book
 
-	if err := DB.Where("id = ?", c.Param("id")).First(&book).Error; err != nil {
-		return &Book{}, err
+	if err := service.db.Where("id = ?", id).First(&book).Error; err != nil {
+		return nil, err
 	}
 
-	DB.Model(&book).Updates(input)
+	service.db.Model(&book).Updates(input)
 
 	return &book, nil
 }
 
-func (service *bookService) CreateBook(c *gin.Context, input Book) (*Book) {
+func (service *bookService) CreateBook(input Book) *Book {
 	book := Book{Title: input.Title, Description: input.Description}
-  
-	DB.Create(&book)
+
+	service.db.Create(&book)
 
 	return &book
 }
+
+// func (service *bookService) GetBookById(id string) (*Book, error) {
+// 	var book Book
+
+// 	if err := service.db.Where("id = ?", id).First(&book).Error; err != nil {
+// 		return &Book{}, err
+// 	}
+// 	return &book, nil
+// }
